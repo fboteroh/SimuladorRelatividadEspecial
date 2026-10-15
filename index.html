@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador de Relatividad Especial</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1b1f2a;--mu:#5b6478;--ac:#5b4bdb;--ac2:#e0562b;--gd:#c98a00;--ln:#d8dce8;--cv:#fbfcff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1220;--card:#171c2e;--tx:#e8ebf6;--mu:#97a0b8;--ac:#8c7dff;--ac2:#ff8a5c;--gd:#ffc933;--ln:#2a3250;--cv:#0b0f1c}}
+:root[data-theme="dark"]{--bg:#0e1220;--card:#171c2e;--tx:#e8ebf6;--mu:#97a0b8;--ac:#8c7dff;--ac2:#ff8a5c;--gd:#ffc933;--ln:#2a3250;--cv:#0b0f1c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:.2em 0}h2{font-size:1.05rem;margin:0 0 6px}
+p.s{color:var(--mu);margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:14px;margin-bottom:14px}
+input[type=range]{width:100%;accent-color:var(--ac)}
+.row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+button,select{font:inherit;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:20px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--ac)}
+.big{font-size:2rem;font-weight:700;color:var(--ac)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.st{background:var(--bg);border-radius:10px;padding:8px 10px}.st b{display:block;font-size:1.25rem}.st span{color:var(--mu);font-size:.8rem}
+canvas{width:100%;display:block;background:var(--cv);border-radius:10px;border:1px solid var(--ln)}
+.sw{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:middle;border:1px solid var(--ln)}
+#ev{font-size:.85rem;color:var(--mu);margin-top:8px}
+.warn{color:var(--ac2);font-weight:600}
+.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:10px 14px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:11}
+.sticky #pre{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}.sticky #pre button{flex:none}
+.sticky #note{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
+.sticky .big{font-size:1.5rem}
+</style></head><body><main>
+<h1>🚀 Simulador de Relatividad Especial</h1>
+<p class="s">Tú eres el observador en reposo. Mueve el control y mira cómo cambia el mundo de una nave que viaja a la velocidad que elijas (c = 1).</p>
+
+<div class="card sticky">
+<div>Velocidad de la nave: <span class="big" id="bv">0</span> <span style="color:var(--mu)">× c</span></div>
+<input type="range" id="sl" min="-1000" max="1000" value="0">
+<div class="row" id="pre"></div>
+<div id="note" style="margin-top:8px;color:var(--mu)"></div>
+</div>
+
+<div class="card"><div class="grid">
+<div class="st"><b id="g">1</b><span>Factor γ de Lorentz</span></div>
+<div class="st"><b id="td">1</b><span>Tiempo: 1 s de la nave = … s tuyos</span></div>
+<div class="st"><b id="lc">100%</b><span>Longitud de la nave que ves</span></div>
+<div class="st"><b id="dp">1</b><span>Rapidez (suma como suma de velocidades)</span></div>
+</div></div>
+
+<div class="card"><h2>1 · Reloj de luz: dilatación del tiempo y contracción de longitud</h2>
+<p class="s">Cada reloj es un fotón rebotando entre dos espejos. Para ti, en la nave el fotón recorre un camino diagonal más largo: su "tic" tarda más. A la izquierda, un reloj en reposo para comparar.</p>
+<canvas id="A" height="250"></canvas>
+<div class="grid" style="margin-top:8px">
+<div class="st"><b id="tl">0.0 s</b><span>Tu reloj</span></div>
+<div class="st"><b id="tn">0.0 s</b><span>Reloj de la nave</span></div>
+<div class="st"><b id="kl">0</b><span>Tics tuyos</span></div>
+<div class="st"><b id="kn">0</b><span>Tics de la nave</span></div>
+</div></div>
+
+<div class="card"><h2>2 · Diagrama de espacio-tiempo (haz clic para crear eventos)</h2>
+<p class="s">Líneas amarillas: la luz. Líneas rojas y moradas: los ejes y la cuadrícula del observador en la nave. Las líneas de "mismo instante" de la nave se inclinan: la simultaneidad es relativa.</p>
+<canvas id="B" height="380"></canvas>
+<div id="ev"></div>
+<div class="row"><button id="clr">Borrar eventos</button></div></div>
+
+<div class="card"><h2>3 · Color de la luz (efecto Doppler)</h2>
+<p class="s">Una luz verde de 550 nm, vista desde la nave.</p>
+<div>De frente: <span class="sw" id="s1"></span> <b id="w1"></b> &nbsp;&nbsp; Por detrás: <span class="sw" id="s2"></span> <b id="w2"></b></div></div>
+
+<div class="card"><h2>4 · Viaje interestelar</h2>
+<select id="dst"><option value="4.37">Alfa Centauri (4,37 años luz)</option><option value="26000">Centro de la Vía Láctea (26 000 al)</option><option value="2500000">Galaxia de Andrómeda (2,5 millones al)</option></select>
+<p id="trip" style="margin:8px 0 0"></p></div>
+<div class="card"><h2>5 · Aberración de la luz: el cielo se apiña hacia adelante</h2>
+<p class="s">Mapa del cielo visto desde la nave: el centro es la dirección de movimiento y el borde es "justo atrás". El círculo amarillo marca lo que en reposo veías a 90° (de lado). Al acelerar, las estrellas se concentran delante de ti.</p>
+<canvas id="C" height="320"></canvas></div>
+
+<div class="card"><h2>6 · Paradoja de los gemelos</h2>
+<p class="s">Un gemelo viaja a la velocidad elegida hasta una estrella y regresa; el otro espera en casa. Los puntos son años vividos por cada uno: el viajero acumula menos. (Ejes con escalas distintas para que quepa.)</p>
+<div>Distancia a la estrella: <b id="ddt">4</b> años luz</div><input type="range" id="dd" min="1" max="20" step="0.5" value="4">
+<canvas id="D" height="300" style="margin-top:8px"></canvas>
+<p id="twt" style="margin:8px 0 0"></p></div>
+
+<div class="card"><h2>7 · Suma relativista de velocidades</h2>
+<p class="s">La nave va a la velocidad elegida arriba. Desde ella lanzas algo a v′ respecto a la nave. ¿Con qué velocidad lo ves tú?</p>
+<div>v′ = <b id="vpt">0.5</b> c</div><input type="range" id="vp" min="-1000" max="1000" value="500">
+<div class="row"><button onclick="$('vp').value=1000">Linterna (≈ luz)</button><button onclick="$('vp').value=500">Proyectil 0,5c</button><button onclick="$('vp').value=-500">Hacia atrás 0,5c</button></div>
+<div style="margin-top:10px;font-size:.8rem;color:var(--mu)">Suma de Galileo (se corta en c)</div>
+<div style="background:var(--bg);border-radius:6px;height:14px"><div id="bg" style="height:100%;background:var(--ac2);border-radius:6px"></div></div>
+<div style="margin-top:6px;font-size:.8rem;color:var(--mu)">Suma relativista (nunca llega a c)</div>
+<div style="background:var(--bg);border-radius:6px;height:14px"><div id="br" style="height:100%;background:var(--ac);border-radius:6px"></div></div>
+<p id="add" style="margin:10px 0 0"></p></div>
+</main>
+<script>
+const $=i=>document.getElementById(i),cs=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let phi=0,b=0,g=1,t=0,tau=0,pS=0,pL=0,evs=[{x:-2,t:0},{x:2,t:1}],last=0;
+const PRE=[["Parado",0],["Caminante",1.4e-8],["Avión",8.2e-7],["Cohete 0,5c",.5],["0,9c",.9],["0,99c",.99],["0,999c",.999],["0,99999c",.99999]];
+PRE.forEach(([n,v])=>{const e=document.createElement("button");e.textContent=n;e.onclick=()=>{phi=Math.atanh(v);$("sl").value=Math.max(-1000,Math.min(1000,phi/4.5*1000));upd()};$("pre").append(e)});
+$("sl").oninput=()=>{phi=$("sl").value/1000*4.5;upd()};
+const msgs=[[.0001,"Casi nada cambia en la vida diaria: por eso la relatividad nos parece extraña."],[.3,"Efectos pequeños pero medibles (los GPS los corrigen)."],[.7,"Ya se nota: la nave se acorta y su reloj se atrasa."],[.95,"Relativista de verdad: ¡la nave es casi una lámina!"],[2,"A esta velocidad el tiempo de la nave casi se detiene para ti. Nada con masa llega a c."]];
+function fmt(x){return x>=100?x.toLocaleString("es",{maximumFractionDigits:0}):x.toLocaleString("es",{maximumSignificantDigits:4})}
+function wl(l){let r=0,gg=0,bb=0;if(l<380||l>750)return null;
+if(l<440){r=(440-l)/60;bb=1}else if(l<490){gg=(l-440)/50;bb=1}else if(l<510){gg=1;bb=(510-l)/20}else if(l<580){r=(l-510)/70;gg=1}else if(l<645){r=1;gg=(645-l)/65}else r=1;
+return`rgb(${r*255|0},${gg*255|0},${bb*255|0})`}
+function upd(){b=Math.tanh(phi);g=Math.cosh(phi);const a=Math.abs(b);
+$("bv").textContent=(b<0?"−":"")+(a<.999?a.toFixed(4):a.toFixed(a<.99999?6:9));
+$("g").textContent=fmt(g);$("td").textContent=fmt(g)+" s";$("lc").textContent=fmt(100/g)+"%";$("dp").textContent=fmt(phi);
+let m=msgs[0][1];for(const[k,s]of msgs)if(a>=k||(k==2&&g>=5))m=s;$("note").textContent=m;
+const D1=550*Math.sqrt((1-b)/(1+b)),D2=550*Math.sqrt((1+b)/(1-b));
+[["1",D1],["2",D2]].forEach(([i,l])=>{const c=wl(l);$("s"+i).style.background=c||"#555";$("w"+i).textContent=fmt(l)+" nm"+(l<380?" (UV, invisible)":l>750?" (IR, invisible)":"")});
+const d=+$("dst").value;
+$("trip").innerHTML=a<1e-3?"Elige una velocidad relativista para ver el viaje.":`Para quienes se quedan: <b>${fmt(d/a)} años</b>. Para quien viaja: <b>${fmt(d/(a*g))} años</b>. Contracción: la distancia le parece de ${fmt(d/g)} años luz.`;
+evInfo()}
+$("dst").onchange=upd;
+function setup(c){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;if(c.width!==Math.round(r.width*d)){c.width=Math.round(r.width*d);c.height=Math.round(c.getAttribute("height")*d)}const x=c.getContext("2d");x.setTransform(d,0,0,d,0,0);return[x,r.width,+c.getAttribute("height")]}
+function clock(x,cx,top,bot,ph,col){x.strokeStyle=cs("--mu");x.lineWidth=3;[top,bot].forEach(y=>{x.beginPath();x.moveTo(cx-18,y);x.lineTo(cx+18,y);x.stroke()});
+const p=ph%1,tr=p<.5?p*2:2-2*p,y=bot-tr*(bot-top);x.fillStyle=col;x.beginPath();x.arc(cx,y,6,0,7);x.fill();return y}
+const trail=[];
+function drawA(){const[x,w,h]=setup($("A"));x.clearRect(0,0,w,h);const top=70,bot=190;
+x.strokeStyle=cs("--ln");x.lineWidth=1;for(let i=0;i<w;i+=40){x.beginPath();x.moveTo(i,h-22);x.lineTo(i,h-14);x.stroke()}x.beginPath();x.moveTo(0,h-14);x.lineTo(w,h-14);x.stroke();
+x.fillStyle=cs("--mu");x.font="12px system-ui";x.fillText("En reposo",14,24);clock(x,50,top,bot,pL,cs("--gd"));
+const L0=260,L=Math.max(3,L0*Math.sqrt(1-b*b)),vp=130,span=w+L0,sx=((60+L0/2+b*vp*t)%span+span)%span-L0/2+60;
+const x0=sx-L/2;x.fillStyle=cs("--ac")+"33";x.strokeStyle=cs("--ac");x.lineWidth=2;x.fillRect(x0,top-30,L,bot-top+60);x.strokeRect(x0,top-30,L,bot-top+60);
+x.fillStyle=cs("--ac");x.fillText(L>60?"Nave (contraída)":"",x0+6,top-36);
+const y=clock(x,sx,top,bot,pS,cs("--ac2"));trail.push([t,y]);while(trail.length&&t-trail[0][0]>2.2)trail.shift();
+x.strokeStyle=cs("--ac2");x.lineWidth=1.5;x.beginPath();trail.forEach(([ti,yy],i)=>{const px=sx-b*vp*(t-ti);i?x.lineTo(px,yy):x.moveTo(px,yy)});x.stroke();
+x.fillStyle=cs("--mu");x.fillText("Camino del fotón visto por ti",Math.max(8,sx-b*vp*1.6-40),h-30)}
+function drawB(){const[x,w,h]=setup($("B")),R=5.6,u=Math.min(w,h)/(2*R),cx=w/2,cy=h/2,S=(a,c)=>[cx+a*u,cy-c*u];
+x.clearRect(0,0,w,h);const L=(p,q,col,lw,dash)=>{x.strokeStyle=col;x.lineWidth=lw;x.setLineDash(dash||[]);x.beginPath();x.moveTo(...S(...p));x.lineTo(...S(...q));x.stroke();x.setLineDash([])};
+const T=(xp,cp)=>[g*(xp+b*cp),g*(cp+b*xp)];
+for(let k=-8;k<=8;k++){L(T(k,-12),T(k,12),cs("--ac")+"44",1);L(T(-12,k),T(12,k),cs("--ac2")+"44",1)}
+L([-R*2,0],[R*2,0],cs("--mu"),1);L([0,-R*2],[0,R*2],cs("--mu"),1);
+L([-12,-12],[12,12],cs("--gd"),2,[6,4]);L([-12,12],[12,-12],cs("--gd"),2,[6,4]);
+L(T(0,-12),T(0,12),cs("--ac"),3);L(T(-12,0),T(12,0),cs("--ac2"),3);
+x.font="12px system-ui";x.fillStyle=cs("--mu");x.fillText("x (tú)",w-44,cy-6);x.fillText("c·t (tú)",cx+6,14);
+x.fillStyle=cs("--ac");let p=S(...T(0,R*1.3));x.fillText("c·t′",p[0]+4,p[1]);x.fillStyle=cs("--ac2");p=S(...T(R*1.4,0));x.fillText("x′",Math.min(p[0],w-20),Math.max(12,Math.min(h-4,p[1])));
+evs.forEach((e,i)=>{const[a,c]=S(e.x,e.t);x.fillStyle=cs("--tx");x.beginPath();x.arc(a,c,6,0,7);x.fill();x.fillText("E"+(i+1),a+8,c-6)})}
+$("B").onclick=e=>{const r=$("B").getBoundingClientRect(),u=Math.min(r.width,r.height)/11.2;
+const X=Math.round(((e.clientX-r.left-r.width/2)/u)*2)/2,Tt=Math.round(((r.height/2-(e.clientY-r.top))/u)*2)/2;evs.push({x:X,t:Tt});if(evs.length>6)evs.shift();evInfo()};
+$("clr").onclick=()=>{evs=[];evInfo()};
+function evInfo(){let s=evs.map((e,i)=>`<b>E${i+1}</b>: tú (x=${e.x}, t=${e.t}) → nave (x′=${(g*(e.x-b*e.t)).toFixed(2)}, t′=${(g*(e.t-b*e.x)).toFixed(2)})`).join("<br>");
+if(evs.length>1){const A=evs[evs.length-2],B=evs[evs.length-1],dx=B.x-A.x,dt=B.t-A.t,dtp=g*(dt-b*dx);
+const n=evs.length;if(Math.abs(dx)>Math.abs(dt)&&dt*dtp<0)s+=`<br><span class="warn">⚡ E${n-1} y E${n} son inconexos (sin relación causal): ¡la nave los ve en orden invertido!</span>`;
+else if(Math.abs(dx)<=Math.abs(dt))s+=`<br>E${n-1} y E${n}: pueden estar conectados causalmente; todos los observadores coinciden en cuál va primero.`;}
+$("ev").innerHTML=s||"Haz clic en el diagrama para añadir eventos."}
+const stars=Array.from({length:500},()=>({c:Math.random()*2-1,p:Math.random()*6.283,m:Math.random()}));
+function drawC(){const[x,w,h]=setup($("C"));x.clearRect(0,0,w,h);const R=Math.min(w,h)/2-14,cx=w/2,cy=h/2,B=Math.abs(b);
+x.strokeStyle=cs("--ln");x.lineWidth=1;[.25,.5,.75,1].forEach(f=>{x.beginPath();x.arc(cx,cy,R*f,0,7);x.stroke()});
+x.strokeStyle=cs("--gd");x.lineWidth=2;x.setLineDash([5,4]);x.beginPath();x.arc(cx,cy,Math.acos(B)/Math.PI*R,0,7);x.stroke();x.setLineDash([]);
+x.fillStyle=cs("--tx");stars.forEach(s=>{const c2=(s.c+B)/(1+B*s.c),th=Math.acos(Math.max(-1,Math.min(1,c2)))/Math.PI*R;
+x.globalAlpha=.35+.65*s.m;x.beginPath();x.arc(cx+th*Math.cos(s.p),cy+th*Math.sin(s.p),1+1.4*s.m,0,7);x.fill()});x.globalAlpha=1;
+x.fillStyle=cs("--mu");x.font="12px system-ui";x.fillText("adelante",cx-20,cy+4);x.fillText("atrás",cx+R-30,cy-R+14)}
+function drawD(){const[x,w,h]=setup($("D"));x.clearRect(0,0,w,h);const d=+$("dd").value,B=Math.abs(b);$("ddt").textContent=d;
+if(B<.01){x.fillStyle=cs("--mu");x.font="14px system-ui";x.fillText("Sube la velocidad para ver el viaje de ida y vuelta.",16,h/2);$("twt").innerHTML="";return}
+const T=2*d/B,pl=40,pr=20,pt=16,pb=24,sx=a=>pl+a/(d*1.15)*(w-pl-pr),sy=c=>h-pb-c/(T*1.05)*(h-pt-pb),ke=Math.max(1,Math.ceil(T/40));
+const Ln=(p,q,col,lw)=>{x.strokeStyle=col;x.lineWidth=lw;x.beginPath();x.moveTo(sx(p[0]),sy(p[1]));x.lineTo(sx(q[0]),sy(q[1]));x.stroke()};
+Ln([0,0],[d*1.15,0],cs("--mu"),1);Ln([0,0],[0,T*1.05],cs("--mu"),1);
+Ln([0,0],[0,T],cs("--ac"),3);Ln([0,0],[d,T/2],cs("--ac2"),3);Ln([d,T/2],[0,T],cs("--ac2"),3);
+for(let c=0;c<=T+1e-9;c+=ke){x.fillStyle=cs("--ac");x.beginPath();x.arc(sx(0),sy(c),3.5,0,7);x.fill()}
+for(let c=0;c<=T+1e-9;c+=ke*g){const px=c<=T/2?B*c:B*(T-c);x.fillStyle=cs("--ac2");x.beginPath();x.arc(sx(px),sy(c),3.5,0,7);x.fill()}
+x.fillStyle=cs("--mu");x.font="12px system-ui";x.fillText("distancia →",w-80,h-8);x.fillText("tiempo ↑",4,12);x.fillText("1 punto = "+ke+(ke>1?" años":" año"),w-110,26);
+$("twt").innerHTML=`Gemelo en casa: <b>${fmt(T)} años</b> · Gemelo viajero: <b>${fmt(T/g)} años</b> · El viajero es <b>${fmt(T-T/g)} años</b> más joven al volver.`}
+function addUpd(){const v=Math.max(-.9999,Math.min(.9999,$("vp").value/1000)),G=b+v,Rr=(b+v)/(1+b*v);$("vpt").textContent=v.toFixed(4);
+$("add").innerHTML=`Galileo: <b>${G.toFixed(4)}c</b> · Relatividad: <b>${Rr.toFixed(6)}c</b>`+(Math.abs(G)>=1?` <span class="warn">⚠ ¡Galileo superaría c!</span>`:"")+`<br>Con rapideces, simplemente se suman: ${fmt(phi)} + ${fmt(Math.atanh(v))} = ${fmt(phi+Math.atanh(v))}`;
+$("bg").style.width=Math.min(100,Math.abs(G)*100)+"%";$("br").style.width=Math.abs(Rr)*100+"%"}
+function loop(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;t+=dt;tau+=dt/g;pS+=dt/(g*2);pL+=dt/2;
+$("tl").textContent=t.toFixed(1)+" s";$("tn").textContent=tau.toFixed(g>20?3:1)+" s";$("kl").textContent=Math.floor(t/2);$("kn").textContent=Math.floor(pS);
+drawA();drawB();drawC();drawD();addUpd();requestAnimationFrame(loop)}
+upd();requestAnimationFrame(loop);
+</script></body></html>
